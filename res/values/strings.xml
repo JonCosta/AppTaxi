@@ -1,0 +1,23 @@
+<resources>
+
+    <string name="app_name">AppTaxi</string>
+    <string name="title_activity_main">Taxi Caller (Modo Taxista)</string>
+    <string name="txtBtnConfig">Configurações</string>
+    <string name="txtStatus">STATUS</string>
+    <string name="strConfigTitle">CONFIGURAÇÕES</string>
+    <string name="strConfigNome">Nome do motorista:</string>
+    <string name="strConfigPlaca">Placa do veículo:</string>
+    <string name="strConfigSalvar">SALVAR</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_config">Taxi Caller (Modo Taxista)</string>
+    <string name="urlWebService">http://172.20.1.7:8090/jersey/teste/mostrarCoord</string>
+    <string name="urlWebService2">http://10.200.200.19:8090/jersey/teste/removerTaxi</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_pedido">PedidoActivity</string>
+    <string name="strPedidoTitulo">NOVO PEDIDO</string>
+    <string name="strPedidoEnd">Endereço</string>
+    <string name="strPedidoRef">Referência</string>
+    <string name="strPedidoAceitar">ACEITAR</string>
+    <string name="strPedidoRecusar">RECUSAR</string>
+
+</resources>
