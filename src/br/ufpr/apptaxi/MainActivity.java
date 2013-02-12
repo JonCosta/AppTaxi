@@ -28,7 +28,7 @@ public class MainActivity extends Activity implements LocationListener {
 
 	private Location local ;
 	private Handler handler ;
-	private boolean controle ;
+	private boolean controle ; //Variável que controla loop de execução do Runnable
 	private SharedPreferences sharedPref ;
 	private TextView txtStatus ;
 	
@@ -46,12 +46,21 @@ public class MainActivity extends Activity implements LocationListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         txtStatus = (TextView) findViewById(R.id.txtStatus) ;
-        txtStatus.setText("LIVRE") ;
-        
-        handler = new Handler() ;
+        handler = new Handler() ; //Inicia o handler que irá executar o Runnable
         checkConfig() ;
-        controle = true ;
-        handler.post(run) ;
+        
+        boolean corrida = checkCorrida() ;
+        if(!corrida){
+        	//Caso não haja corrida em andamento...
+        	controle = true ;
+            handler.post(run) ; //Inicia o Runnable para mandar coordenadas 
+            txtStatus.setText("LIVRE") ;
+        }else{
+        	//Caso haja uma corrida, NÃO inicia o Runnable
+        	controle = false ;
+        	txtStatus.setText("EM SERVIÇO") ;
+        }
+        
     }//Fecha onCreate
 
 	
@@ -67,9 +76,9 @@ public class MainActivity extends Activity implements LocationListener {
     @Override
     protected void onDestroy() {
     	super.onDestroy();
-    	controle = false ;
+    	controle = false ; //Desliga o loop do Runnable
     	removerTaxi() ;
-    	finish() ;
+    	finish() ; //Encerra a Activity
     }//Fecha onDestroy
     
     @Override
@@ -77,20 +86,29 @@ public class MainActivity extends Activity implements LocationListener {
     	super.onPause() ;    	
     	controle = false ;
     	removerTaxi() ;
-    	finish() ;
+    	finish() ; //Encerra a Activity
     }//Fecha onPause
     
     @Override
     protected void onResume(){
     	super.onResume() ;
-    	controle = true ;
+    	controle = true ; //Reinicia o loop da Runnable
     }
     
     @Override
     protected void onRestart(){
     	super.onRestart() ;
-    	controle = true ;
+    	controle = true ; //Reinicia o loop da Runnable
     }
+    
+    //Método que verifica so táxi está com uma corrida em andamento
+    public boolean checkCorrida(){
+    	boolean corrida = false ;
+    	Intent it = getIntent() ;
+    	Bundle params = it.getExtras() ;
+    	corrida = params.getBoolean("Corrida") ; //Pega um Boolean que seria enviado pela PedidoActivity
+    	return corrida ;
+    }//Fecha checkCorrida
     
     //Método que verifica se placa e nome forma informados
     public void checkConfig(){
@@ -99,24 +117,23 @@ public class MainActivity extends Activity implements LocationListener {
         if((sharedPref.getString("Nome", "").equals(""))||(sharedPref.getString("Placa", "").equals(""))){
         	//Se não houver valores gravados, leva para a tela de Configurações
         	AlertDialog.Builder builder = new AlertDialog.Builder(this) ;
+        	AlertDialog alert = null ;
         	builder.setTitle("AVISO") ;
         	builder.setMessage("Você não configurou seus dados") ;
-        	builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+    		builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
     			@Override
     			public void onClick(DialogInterface dialog, int which) {
-    				Intent it = new Intent(getApplicationContext(), ConfigActivity.class) ;
-    	    		startActivity(it) ;
+    				Intent it = new Intent(getApplicationContext(), ConfigActivity.class) ; 
+    				startActivity(it);
     			}
     		});//Fecha PositiveButton
-        	
-        	AlertDialog alert = builder.create() ;
+    		alert = builder.create() ;
         	alert.show() ;
         }//Fecha if
     }//Fecha checkConfig
     
     //Método que obtém os valores de Latitude e Longitude a partir do GPS
     public HashMap getCoordenadas(){
-    	
     	
     	//Doubles para receber coordenadas do GPS
     	double lat = 0, lng = 0 ; 
@@ -134,21 +151,25 @@ public class MainActivity extends Activity implements LocationListener {
         local = LM.getLastKnownLocation(bestProvider) ;
         
         //Obtém-se os valores de latitude e longitude
-        lat = local.getLatitude() ;
-        lng = local.getLongitude();
-        
-        Log.d("TAXI", "lat: "+lat+" lng:"+lng) ;
-        
-        //Obtém os dados de nome e placa do motorista
-        sharedPref = getSharedPreferences("Configurações", MODE_PRIVATE) ;
-        nome = sharedPref.getString("Nome", "") ;
-        placa = sharedPref.getString("Placa", "") ;
-        
-        //Valores são inseridos no HashMap
-        params.put("Latitude", lat);
-    	params.put("Longitude", lng);
-    	params.put("Nome", nome) ;
-    	params.put("Placa", placa);
+        try{
+        	lat = local.getLatitude() ;
+            lng = local.getLongitude();
+            Log.d("TAXI", "lat: "+lat+" lng:"+lng) ;
+            
+            //Obtém os dados de nome e placa do motorista
+            sharedPref = getSharedPreferences("Configurações", MODE_PRIVATE) ;
+            nome = sharedPref.getString("Nome", "") ;
+            placa = sharedPref.getString("Placa", "") ;
+            
+            //Valores são inseridos no HashMap
+            params.put("Latitude", lat);
+        	params.put("Longitude", lng);
+        	params.put("Nome", nome) ;
+        	params.put("Placa", placa);
+        }catch(NullPointerException e){
+        	e.printStackTrace() ;
+        	finish() ;
+        }
 
     	return params ;
     	
@@ -164,23 +185,26 @@ public class MainActivity extends Activity implements LocationListener {
         JSONObject jsonParams = new JSONObject(params);
         
         //Obtém-se a 'reposta' da WebService, defindo o método a ser acessado e os parâmetros
-    	JSONObject resp = HttpClient.SendHttpPost(this.getString(R.string.urlWebService), jsonParams);
+    	JSONObject resp = HttpClient.SendHttpPost(this.getString(R.string.urlWSmostrarCoord), jsonParams);
     	
     	//Doubles para exibição das coordenadas
     	//double latExib = 0, lngExib =0;
     	String confirm = "", endereco = "", referencia = "" ;
+    	int posicao = 0 ;
     	boolean pedido = false ;
     	
     	//Obtém-se como resposta da WS as mesmas coordenadas enviadas
     	try {
-			//latExib = resp.getDouble("coord1");
-			//lngExib = resp.getDouble("coord2") ;
 			confirm = resp.getString("msg") ;
 			pedido = resp.getBoolean("Pedido") ;
 		} catch (JSONException e) {
-			Log.e("ERRO JSON", e.toString()) ;
+			e.printStackTrace() ;
+			controle = false ;
+	    	removerTaxi() ;
 		} catch (NullPointerException e){
-			Log.e("ERRO NULL", e.toString()) ;
+			e.printStackTrace() ;
+			controle = false ;
+	    	removerTaxi() ;
 		}
 
     	//Exibe na tela a mensagem com as coordenadas recebidas da WS
@@ -190,14 +214,18 @@ public class MainActivity extends Activity implements LocationListener {
     		try{
     			endereco = resp.getString("Endereco") ;
     			referencia = resp.getString("Referencia") ;
+    			posicao = resp.getInt("PosicaoPedido") ;
     			
     		}catch(JSONException e){
+    			e.printStackTrace() ;
+    		}catch(NullPointerException e){
     			e.printStackTrace() ;
     		}
     		Intent it = new Intent(this, PedidoActivity.class) ;
     		Bundle bundle = new Bundle() ;
     		bundle.putString("Endereco", endereco) ;
     		bundle.putString("Referencia", referencia) ;
+    		bundle.putInt("PosicaoPedido", posicao) ;
     		it.putExtras(bundle) ;
     		startActivity(it) ;
     	}//Fecha if(pedido)
@@ -217,14 +245,19 @@ public class MainActivity extends Activity implements LocationListener {
         JSONObject jsonParams = new JSONObject(params);
         
         //Obtém-se a 'reposta' da WebService, defindo o método a ser acessado e os parâmetros
-    	JSONObject resp = HttpClient.SendHttpPost(this.getString(R.string.urlWebService2), jsonParams);
+    	JSONObject resp = HttpClient.SendHttpPost(this.getString(R.string.urlWSremoverTaxi), jsonParams);
     	try{
     		String result = resp.getString("Result") ;
     		Log.d("REMOVER", result ) ;
     	}catch(JSONException e){
     		e.printStackTrace() ;
+    		controle = false ;
+	    	finish() ;
+    	}catch(NullPointerException e){
+    		e.printStackTrace() ;
+    		controle = false ;
+	    	finish() ;
     	}
-    	
     	
     }//Fecha removerTaxi
     

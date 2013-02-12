@@ -10,8 +10,9 @@
     <string name="strConfigSalvar">SALVAR</string>
     <string name="hello_world">Hello world!</string>
     <string name="title_activity_config">Taxi Caller (Modo Taxista)</string>
-    <string name="urlWebService">http://172.20.1.7:8090/jersey/teste/mostrarCoord</string>
-    <string name="urlWebService2">http://10.200.200.19:8090/jersey/teste/removerTaxi</string>
+    <string name="urlWSmostrarCoord">http://192.168.1.101:8090/jersey/teste/mostrarCoord</string>
+    <string name="urlWSremoverTaxi">http://192.168.1.101:8090/jersey/teste/removerTaxi</string>
+    <string name="urlWSenviarConfirmPedido">http://192.168.1.101:8090/jersey/teste/aceitarPedido</string>
     <string name="menu_settings">Settings</string>
     <string name="title_activity_pedido">PedidoActivity</string>
     <string name="strPedidoTitulo">NOVO PEDIDO</string>

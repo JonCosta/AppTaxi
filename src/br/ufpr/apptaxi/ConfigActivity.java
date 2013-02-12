@@ -28,7 +28,6 @@ public class ConfigActivity extends Activity {
         editNome.setText(nome) ;
         editPlaca.setText(placa) ;
         
-        
     }//Fecha onCreate
 
     public void onClick(View v){
