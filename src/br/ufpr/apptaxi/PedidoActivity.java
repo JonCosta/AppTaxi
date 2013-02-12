@@ -98,9 +98,10 @@ public class PedidoActivity extends Activity {
     	
     	//Se a confirmação foi enviada corretamente, abre nova MainActivity com parâmetro 
     	if(ok){
-    		Intent it = new Intent(getApplicationContext(), MainActivity.class) ;
+    		Intent it = new Intent(this, MainActivity.class) ;
     		Bundle param = new Bundle() ;
     		param.putBoolean("Corrida", true) ; //Indicará que o aplicativo não deve enviar coordenadas ao abrir a tela
+    		it.putExtras(param) ;
     		startActivity(it) ;
     		finish() ;
     	}

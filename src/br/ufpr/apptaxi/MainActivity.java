@@ -105,8 +105,12 @@ public class MainActivity extends Activity implements LocationListener {
     public boolean checkCorrida(){
     	boolean corrida = false ;
     	Intent it = getIntent() ;
-    	Bundle params = it.getExtras() ;
-    	corrida = params.getBoolean("Corrida") ; //Pega um Boolean que seria enviado pela PedidoActivity
+    	try{
+	    	Bundle params = it.getExtras() ;
+	    	corrida = params.getBoolean("Corrida") ; //Pega um Boolean que seria enviado pela PedidoActivity
+    	}catch(NullPointerException e){
+    		corrida = false ;
+    	}
     	return corrida ;
     }//Fecha checkCorrida
     
