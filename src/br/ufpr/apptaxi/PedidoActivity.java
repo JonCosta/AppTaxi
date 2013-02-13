@@ -66,6 +66,7 @@ public class PedidoActivity extends Activity {
     		break ;
     	case R.id.btnPedidoRecusar: 
     		//Retorna para a MainActivity
+    		recusarPedido() ;
     		Intent it = new Intent(this, MainActivity.class) ;
     		startActivity(it) ;
     		finish(); //Encerra esta atividade para que não haja retorno
@@ -103,11 +104,37 @@ public class PedidoActivity extends Activity {
     		param.putBoolean("Corrida", true) ; //Indicará que o aplicativo não deve enviar coordenadas ao abrir a tela
     		it.putExtras(param) ;
     		startActivity(it) ;
-    		finish() ;
+    		finish(); //Encerra esta atividade para que não haja retorno
     	}
     }//Fecha enviaConfirmPedido
     
-
+    
+    public void recusarPedido(){
+    	//Obtém-se as informações do taxista, gravadas na SharedPreferences
+    	boolean ok = false ; //Boolean a ser usado em sequencia
+    	SharedPreferences sharedPref = getSharedPreferences("Configurações", MODE_PRIVATE) ;
+    	String placaTaxi = sharedPref.getString("Placa", "") ;
+    	//Colocam-se as informações do taxista como parâmetros para método da WS
+    	HashMap params = new HashMap() ;
+    	params.put("PlacaTaxi", placaTaxi) ;
+    	params.put("Indice", posicao) ; //Posição do Pedido recebido no ArrayList
+    	JSONObject jsonParams = new JSONObject(params) ;
+    	JSONObject resp = HttpClient.SendHttpPost(this.getString(R.string.urlWSenviarRecusaPedido), jsonParams) ;
+    	//Recebe como resposta um boolean que verifica se a confirmação foi enviada com sucesso
+    	try{
+    		ok = resp.getBoolean("OK") ;
+    	}catch(JSONException e){
+    		e.printStackTrace() ;
+    	}
+    	
+    	//Se a confirmação foi enviada corretamente, abre nova MainActivity com parâmetro 
+    	if(ok){
+    		Intent it = new Intent(this, MainActivity.class) ;
+    		startActivity(it) ;
+    		finish() ;
+    	}
+    }//Fecha recusarPedido
+    
     //----MÉTODOS PADRÃO ANDROID---\\
     @Override
     protected void onPause(){
