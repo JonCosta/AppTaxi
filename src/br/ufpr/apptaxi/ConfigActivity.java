@@ -6,6 +6,7 @@ import android.widget.EditText;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 
@@ -55,6 +56,8 @@ public class ConfigActivity extends Activity {
         		editor.putString("Nome", nome) ;
         		editor.putString("Placa", placa) ;
         		editor.commit() ;
+        		Intent it = new Intent(this, MainActivity.class) ;
+            	startActivity(it) ;
         		finish() ;
             }
     		break ;
@@ -80,6 +83,8 @@ public class ConfigActivity extends Activity {
         	alert.show() ;
         }
         else{
+        	Intent it = new Intent(this, MainActivity.class) ;
+        	startActivity(it) ;
         	finish() ;
         }
     }//Fecha onReturn

@@ -14,6 +14,9 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,7 +35,8 @@ public class MainActivity extends Activity implements LocationListener {
 	private SharedPreferences sharedPref ;
 	private TextView txtStatus ;
 	
-    Runnable run = new Runnable(){
+	//Thread que envia as coordenadas
+    Runnable runTaxiCoord = new Runnable(){
     	public void run(){
     		if(controle){
     			mostrarCoord();
@@ -41,6 +45,36 @@ public class MainActivity extends Activity implements LocationListener {
     	} //Fecha run
     };
 	
+    //Thread para remover o taxi do Array
+    Runnable runRemoveTaxi = new Runnable() {
+		
+		@Override
+		public void run() {
+			SharedPreferences sharedPref = getSharedPreferences("Configurações", MODE_PRIVATE) ;
+	    	String placa = sharedPref.getString("Placa", "") ;
+	    	HashMap params = new HashMap();
+	    	params.put("Placa", placa) ;
+
+	    	//Cria-se o objeto JSON a partir do HashMap
+	        JSONObject jsonParams = new JSONObject(params);
+	        
+	        //Obtém-se a 'reposta' da WebService, defindo o método a ser acessado e os parâmetros
+	    	JSONObject resp = HttpClient.SendHttpPost(getApplicationContext().getString(R.string.urlWSremoverTaxi), jsonParams);
+	    	try{
+	    		String result = resp.getString("Result") ;
+	    		Log.d("TAXI", result ) ;
+	    	}catch(JSONException e){
+	    		e.printStackTrace() ;
+	    		controle = false ;
+		    	finish() ;
+	    	}catch(NullPointerException e){
+	    		e.printStackTrace() ;
+	    		controle = false ;
+		    	finish() ;
+	    	}
+		}
+	};
+    
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,7 +87,7 @@ public class MainActivity extends Activity implements LocationListener {
         if(!corrida){
         	//Caso não haja corrida em andamento...
         	controle = true ;
-            handler.post(run) ; //Inicia o Runnable para mandar coordenadas 
+            handler.post(runTaxiCoord) ; //Inicia o Runnable para mandar coordenadas 
             txtStatus.setText("LIVRE") ;
         }else{
         	//Caso haja uma corrida, NÃO inicia o Runnable
@@ -63,30 +97,21 @@ public class MainActivity extends Activity implements LocationListener {
         
     }//Fecha onCreate
 
-	
-    public void onClick(View v){
-    	switch(v.getId()){
-    	case R.id.btnConfig: 
-    		Intent it = new Intent(getApplicationContext(), ConfigActivity.class) ;
-    		startActivity(it) ;
-    		break ;
-    	}//Fecha switch
-    }
     
     @Override
     protected void onDestroy() {
     	super.onDestroy();
     	controle = false ; //Desliga o loop do Runnable
-    	removerTaxi() ;
-    	finish() ; //Encerra a Activity
+    	handler.post(runRemoveTaxi) ;
+    	finish() ;
     }//Fecha onDestroy
     
     @Override
     protected void onPause() {
     	super.onPause() ;    	
     	controle = false ;
-    	removerTaxi() ;
-    	finish() ; //Encerra a Activity
+    	handler.post(runRemoveTaxi) ;
+    	finish() ;
     }//Fecha onPause
     
     @Override
@@ -171,8 +196,7 @@ public class MainActivity extends Activity implements LocationListener {
         	params.put("Nome", nome) ;
         	params.put("Placa", placa);
         }catch(NullPointerException e){
-        	e.printStackTrace() ;
-        	finish() ;
+        	Log.e("TAXI", e.toString()) ;
         }
 
     	return params ;
@@ -200,15 +224,16 @@ public class MainActivity extends Activity implements LocationListener {
     	//Obtém-se como resposta da WS as mesmas coordenadas enviadas
     	try {
 			confirm = resp.getString("msg") ;
+			Log.d("TAXI", confirm) ;
 			pedido = resp.getBoolean("Pedido") ;
 		} catch (JSONException e) {
-			e.printStackTrace() ;
+			Log.e("TAXI", e.toString()) ;
 			controle = false ;
-	    	removerTaxi() ;
+	    	handler.post(runRemoveTaxi) ;
 		} catch (NullPointerException e){
-			e.printStackTrace() ;
+			Log.e("TAXI", e.toString()) ;
 			controle = false ;
-	    	removerTaxi() ;
+			handler.post(runRemoveTaxi) ;
 		}
 
     	//Exibe na tela a mensagem com as coordenadas recebidas da WS
@@ -238,32 +263,25 @@ public class MainActivity extends Activity implements LocationListener {
     	
     }//Fecha mostrarCoord
     
-    //Função que remove o táxi do Array da WS
-    public void removerTaxi(){
-    	SharedPreferences sharedPref = getSharedPreferences("Configurações", MODE_PRIVATE) ;
-    	String placa = sharedPref.getString("Placa", "") ;
-    	HashMap params = new HashMap();
-    	params.put("Placa", placa) ;
-
-    	//Cria-se o objeto JSON a partir do HashMap
-        JSONObject jsonParams = new JSONObject(params);
-        
-        //Obtém-se a 'reposta' da WebService, defindo o método a ser acessado e os parâmetros
-    	JSONObject resp = HttpClient.SendHttpPost(this.getString(R.string.urlWSremoverTaxi), jsonParams);
-    	try{
-    		String result = resp.getString("Result") ;
-    		Log.d("REMOVER", result ) ;
-    	}catch(JSONException e){
-    		e.printStackTrace() ;
-    		controle = false ;
-	    	finish() ;
-    	}catch(NullPointerException e){
-    		e.printStackTrace() ;
-    		controle = false ;
-	    	finish() ;
-    	}
-    	
-    }//Fecha removerTaxi
+   
+    //Função para inflar o menu
+    public boolean onCreateOptionsMenu(Menu menu){
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.activity_main, menu) ;
+		return true ;
+	}//Fecha onCreateOptionsMenu
+    
+    //Função para 
+    public boolean onOptionsItemSelected(MenuItem item){
+		switch(item.getItemId()){
+		case R.id.menu_config:
+			Intent it = new Intent(this, ConfigActivity.class);
+			startActivity(it) ;
+			return true ;
+		default:
+			return super.onOptionsItemSelected(item) ;
+		}//Fecha switch
+	}//Fecha onOptionsItemSelected
     
     //---CLASSES DE LOCATION LISTENER---\\
 	@Override

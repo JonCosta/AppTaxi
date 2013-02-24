@@ -3,23 +3,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
-    <Button
-        android:id="@+id/btnConfig"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="133dp"
-        android:onClick="onClick"
-        android:text="@string/txtBtnConfig" />
-
     <TextView
         android:id="@+id/txtStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/btnConfig"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="67dp"
+        android:layout_centerVertical="true"
         android:text="@string/txtStatus"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
